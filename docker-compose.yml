@@ -1,0 +1,101 @@
+# Amina Travel — local development stack.
+# Brings up the backing services the modular monolith needs. Start with:
+#   docker compose up -d
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: amina-postgres
+    environment:
+      POSTGRES_USER: amina
+      POSTGRES_PASSWORD: amina
+      POSTGRES_DB: amina_travel
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U amina -d amina_travel"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: amina-redis
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    ports:
+      - "6379:6379"
+
+  opensearch:
+    image: opensearchproject/opensearch:2.17.0
+    container_name: amina-opensearch
+    environment:
+      - discovery.type=single-node
+      - plugins.security.disabled=true
+      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=Amina_Dev_2026!
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - osdata:/usr/share/opensearch/data
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: amina-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: amina
+      RABBITMQ_DEFAULT_PASS: amina
+    ports:
+      - "5672:5672"   # AMQP
+      - "15672:15672" # management UI
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    container_name: amina-keycloak
+    command: ["start-dev"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/amina_travel
+      KC_DB_USERNAME: amina
+      KC_DB_PASSWORD: amina
+      KC_DB_SCHEMA: keycloak
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # --- Application services (started with the "app" profile / `make up`) ---
+  api:
+    build:
+      context: ./backend
+    container_name: amina-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      Kestrel__Endpoints__Http__Url: http://0.0.0.0:8080
+      ConnectionStrings__HotelsDb: Host=postgres;Port=5432;Database=amina_travel;Username=amina;Password=amina;SearchPath=hotels
+      Cors__Origins__0: http://localhost:3000
+    ports:
+      - "5080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    profiles: ["app"]
+
+  web:
+    build:
+      context: ./front
+      args:
+        NEXT_PUBLIC_API_BASE_URL: http://localhost:5080
+    container_name: amina-web
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+    profiles: ["app"]
+
+volumes:
+  pgdata:
+  osdata:
