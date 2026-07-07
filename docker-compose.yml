@@ -72,6 +72,9 @@ services:
       args:
         NEXT_PUBLIC_API_BASE_URL: http://localhost:5080
     container_name: amina-web
+    environment:
+      # Server-side rendering inside the container reaches the API via the compose network.
+      API_URL_INTERNAL: http://api:8080
     ports:
       - "3000:3000"
     depends_on:
