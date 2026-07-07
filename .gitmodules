@@ -1,0 +1,6 @@
+[submodule "front"]
+	path = front
+	url = https://github.com/ghassen-git/amina-travel-front.git
+[submodule "backend"]
+	path = backend
+	url = https://github.com/ghassen-git/amina-travel-Backend.git
