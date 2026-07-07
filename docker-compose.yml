@@ -58,6 +58,10 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       Kestrel__Endpoints__Http__Url: http://0.0.0.0:8080
       ConnectionStrings__HotelsDb: Host=postgres;Port=5432;Database=amina_travel;Username=amina;Password=amina;SearchPath=hotels
+      # Used by the Auth module (feature/hotels-crud and later); ignored by builds without it.
+      ConnectionStrings__AuthDb: Host=postgres;Port=5432;Database=amina_travel;Username=amina;Password=amina;SearchPath=auth
+      # Image uploads (admin CRUD). Set CLOUDINARY_URL in .env; empty = uploads return 503.
+      Cloudinary__Url: ${CLOUDINARY_URL:-}
       Cors__Origins__0: http://localhost:3000
     ports:
       - "5080:8080"
