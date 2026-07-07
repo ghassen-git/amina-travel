@@ -13,7 +13,6 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./infra/postgres-init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U amina -d amina_travel"]
       interval: 10s
@@ -49,24 +48,6 @@ services:
     ports:
       - "5672:5672"   # AMQP
       - "15672:15672" # management UI
-
-  keycloak:
-    image: quay.io/keycloak/keycloak:26.0
-    container_name: amina-keycloak
-    command: ["start-dev"]
-    environment:
-      KC_BOOTSTRAP_ADMIN_USERNAME: admin
-      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
-      KC_DB: postgres
-      KC_DB_URL: jdbc:postgresql://postgres:5432/amina_travel
-      KC_DB_USERNAME: amina
-      KC_DB_PASSWORD: amina
-      KC_DB_SCHEMA: keycloak
-    ports:
-      - "8080:8080"
-    depends_on:
-      postgres:
-        condition: service_healthy
 
   # --- Application services (started with the "app" profile / `make up`) ---
   api:

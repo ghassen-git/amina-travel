@@ -39,7 +39,7 @@ Chosen to **reuse your existing .NET expertise** (the Contably stack) so pattern
 | **DB** | PostgreSQL 16 + EF Core 9 (schema-per-module) | Familiar; strong for transactional booking data |
 | **Search** | OpenSearch / Elasticsearch | Hotel & package faceted search, geo, autocomplete — RDBMS won't scale for this |
 | **Cache / sessions** | Redis | Price caching (supplier quotes expire fast), rate-limiting, distributed locks on inventory |
-| **Auth/Identity** | Keycloak (OIDC) | Same as Contably; social login, roles (customer/agent/admin) |
+| **Auth/Identity** | TBD — e.g. ASP.NET Core Identity + JWT | Social login, roles (customer/agent/admin) |
 | **Async / events** | Transactional outbox + RabbitMQ (or MassTransit) | Booking → payment → ticketing saga, supplier callbacks |
 | **Web frontend** | **Next.js (React) + TypeScript**, SSR/ISR | Travel is **SEO-critical**; SSR + Tailwind, i18n (FR/AR/EN, RTL) |
 | **Mobile** | Phase 2: React Native (shared TS) or responsive PWA first | Defer native until web validated |
@@ -121,7 +121,7 @@ Booking status flow (saga): `Draft → Quoted → Held → PaymentPending → Co
 ## 6. Delivery Roadmap (phased)
 
 ### Phase 0 — Foundations (2–3 wks)
-Repo & solution scaffold, CI/CD, Docker Compose (Postgres/Redis/OpenSearch/Keycloak/RabbitMQ), auth, tenancy/config, i18n skeleton (FR/AR/EN), design system, error handling, observability baseline (OpenTelemetry + Loki + Prometheus — same as Contably).
+Repo & solution scaffold, CI/CD, Docker Compose (Postgres/Redis/OpenSearch/RabbitMQ), auth, tenancy/config, i18n skeleton (FR/AR/EN), design system, error handling, observability baseline (OpenTelemetry + Loki + Prometheus — same as Contably).
 
 ### Phase 1 — MVP: Hotels + Booking + Payments (6–8 wks) ⭐
 The single vertical that proves the platform end-to-end.

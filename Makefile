@@ -33,7 +33,7 @@ init: env ## First run: build images and start the whole stack in Docker, then h
 up: env ## Start the whole stack (infra + api + web) in Docker
 	$(COMPOSE) $(APP_PROFILE) up -d
 
-infra: env ## Start only backing services (postgres, redis, opensearch, rabbitmq, keycloak)
+infra: env ## Start only backing services (postgres, redis, opensearch, rabbitmq)
 	$(COMPOSE) up -d
 
 build: ## Build the api and web images
