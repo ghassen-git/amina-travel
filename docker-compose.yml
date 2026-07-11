@@ -57,12 +57,23 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       Kestrel__Endpoints__Http__Url: http://0.0.0.0:8080
+      # Every module owns a schema; each needs its connection string pointed at the compose network.
       ConnectionStrings__HotelsDb: Host=postgres;Port=5432;Database=amina_travel;Username=amina;Password=amina;SearchPath=hotels
-      # Used by the Auth module (feature/hotels-crud and later); ignored by builds without it.
       ConnectionStrings__AuthDb: Host=postgres;Port=5432;Database=amina_travel;Username=amina;Password=amina;SearchPath=auth
+      ConnectionStrings__PromosDb: Host=postgres;Port=5432;Database=amina_travel;Username=amina;Password=amina;SearchPath=promos
+      ConnectionStrings__BookingsDb: Host=postgres;Port=5432;Database=amina_travel;Username=amina;Password=amina;SearchPath=bookings
+      ConnectionStrings__VoyagesDb: Host=postgres;Port=5432;Database=amina_travel;Username=amina;Password=amina;SearchPath=voyages
+      ConnectionStrings__ReservationsDb: Host=postgres;Port=5432;Database=amina_travel;Username=amina;Password=amina;SearchPath=reservations
+      ConnectionStrings__PaymentsDb: Host=postgres;Port=5432;Database=amina_travel;Username=amina;Password=amina;SearchPath=payments
       # Image uploads (admin CRUD). Set CLOUDINARY_URL in .env; empty = uploads return 503.
       Cloudinary__Url: ${CLOUDINARY_URL:-}
       Cors__Origins__0: http://localhost:3000
+      # Payments — Clictopay/SMT. Empty credentials → in-site mock bank page (dev default).
+      # Fill these to redirect customers to the real Clictopay hosted page.
+      Payments__Clictopay__UserName: ${CLICTOPAY_USERNAME:-}
+      Payments__Clictopay__Password: ${CLICTOPAY_PASSWORD:-}
+      Payments__Clictopay__BaseUrl: ${CLICTOPAY_BASE_URL:-https://test.clictopay.com}
+      Payments__Clictopay__WebBaseUrl: http://localhost:3000
     ports:
       - "5080:8080"
     depends_on:
