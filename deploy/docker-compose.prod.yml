@@ -36,6 +36,8 @@ services:
       ConnectionStrings__VoyagesDb:      Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};SearchPath=voyages
       ConnectionStrings__ReservationsDb: Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};SearchPath=reservations
       ConnectionStrings__PaymentsDb:     Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};SearchPath=payments
+      # JWT signing secret (HMAC-SHA256). REQUIRED — the app has no default; must be >=32 chars.
+      Auth__SigningKey: ${JWT_SIGNING_KEY:?set JWT_SIGNING_KEY in .env}
       # Browser origins allowed to call the API (Cloudflare-fronted HTTPS).
       Cors__Origins__0: https://${DOMAIN}
       Cors__Origins__1: https://www.${DOMAIN}
