@@ -1,0 +1,6 @@
+# Never commit the filled production env or origin certs.
+.env
+nginx/certs/
+
+# local build log
+build.log

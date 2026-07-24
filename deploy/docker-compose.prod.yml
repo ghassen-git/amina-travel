@@ -1,0 +1,106 @@
+# Amina Travel — production stack (single VPS + nginx + Cloudflare in front).
+# Run from the deploy/ dir:  docker compose -f docker-compose.prod.yml --env-file .env up -d --build
+# Only nginx is exposed to the host; every other service is on the private `amina` network.
+name: amina-prod
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: amina-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [amina]
+
+  api:
+    build:
+      context: ../backend
+    container_name: amina-api
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://0.0.0.0:8080
+      ConnectionStrings__HotelsDb:       Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};SearchPath=hotels
+      ConnectionStrings__AuthDb:         Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};SearchPath=auth
+      ConnectionStrings__PromosDb:       Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};SearchPath=promos
+      ConnectionStrings__BookingsDb:     Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};SearchPath=bookings
+      ConnectionStrings__VoyagesDb:      Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};SearchPath=voyages
+      ConnectionStrings__ReservationsDb: Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};SearchPath=reservations
+      ConnectionStrings__PaymentsDb:     Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};SearchPath=payments
+      # Browser origins allowed to call the API (Cloudflare-fronted HTTPS).
+      Cors__Origins__0: https://${DOMAIN}
+      Cors__Origins__1: https://www.${DOMAIN}
+      Cors__Origins__2: https://admin.${DOMAIN}
+      # Integrations — empty values degrade gracefully (mock bank / 503 uploads / no email).
+      Cloudinary__Url:                 ${CLOUDINARY_URL:-}
+      Payments__Clictopay__UserName:   ${CLICTOPAY_USERNAME:-}
+      Payments__Clictopay__Password:   ${CLICTOPAY_PASSWORD:-}
+      Payments__Clictopay__BaseUrl:    ${CLICTOPAY_BASE_URL:-https://test.clictopay.com}
+      Payments__Clictopay__WebBaseUrl: https://${DOMAIN}
+      Hotels__TunisiaBeds__Login:      ${TUNISIABEDS_LOGIN:-}
+      Hotels__TunisiaBeds__Password:   ${TUNISIABEDS_PASSWORD:-}
+      Smtp__User:     ${SMTP_USER:-}
+      Smtp__Password: ${SMTP_PASSWORD:-}
+      Smtp__To:       ${SMTP_TO:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [amina]
+
+  web:
+    build:
+      context: ../front
+      dockerfile: apps/website/Dockerfile
+      args:
+        # Compile-time: baked into the browser bundle. Must be the public API URL.
+        NEXT_PUBLIC_API_BASE_URL: https://api.${DOMAIN}
+    container_name: amina-web
+    restart: unless-stopped
+    environment:
+      API_URL_INTERNAL: http://api:8080   # server-side rendering hits the API in-network
+    depends_on: [api]
+    networks: [amina]
+
+  admin:
+    build:
+      context: ../front
+      dockerfile: apps/admin/Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE_URL: https://api.${DOMAIN}
+    container_name: amina-admin
+    restart: unless-stopped
+    environment:
+      API_URL_INTERNAL: http://api:8080
+    depends_on: [api]
+    networks: [amina]
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: amina-nginx
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN}
+      NGINX_ENVSUBST_FILTER: DOMAIN   # only substitute ${DOMAIN}; keep nginx's own $vars intact
+    ports:
+      - "80:80"
+      # - "443:443"   # enable AFTER installing the Cloudflare origin cert (see DEPLOY.md)
+    volumes:
+      - ./nginx/templates:/etc/nginx/templates:ro
+      # - ./nginx/certs:/etc/nginx/certs:ro   # place fullchain.pem + privkey.pem here for 443
+    depends_on: [web, admin, api]
+    networks: [amina]
+
+networks:
+  amina:
+
+volumes:
+  pgdata:
