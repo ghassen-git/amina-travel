@@ -94,10 +94,10 @@ services:
       NGINX_ENVSUBST_FILTER: DOMAIN   # only substitute ${DOMAIN}; keep nginx's own $vars intact
     ports:
       - "80:80"
-      # - "443:443"   # enable AFTER installing the Cloudflare origin cert (see DEPLOY.md)
+      - "443:443"
     volumes:
       - ./nginx/templates:/etc/nginx/templates:ro
-      # - ./nginx/certs:/etc/nginx/certs:ro   # place fullchain.pem + privkey.pem here for 443
+      - ./nginx/certs:/etc/nginx/certs:ro   # origin.pem + origin.key (self-signed for "Full")
     depends_on: [web, admin, api]
     networks: [amina]
 
