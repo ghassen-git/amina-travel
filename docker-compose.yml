@@ -31,6 +31,7 @@ services:
       ConnectionStrings__HotelsDb: Host=postgres;Port=5432;Database=amina_travel;Username=amina;Password=amina;SearchPath=hotels
       ConnectionStrings__AuthDb: Host=postgres;Port=5432;Database=amina_travel;Username=amina;Password=amina;SearchPath=auth
       ConnectionStrings__PromosDb: Host=postgres;Port=5432;Database=amina_travel;Username=amina;Password=amina;SearchPath=promos
+      ConnectionStrings__ReelsDb: Host=postgres;Port=5432;Database=amina_travel;Username=amina;Password=amina;SearchPath=reels
       ConnectionStrings__BookingsDb: Host=postgres;Port=5432;Database=amina_travel;Username=amina;Password=amina;SearchPath=bookings
       ConnectionStrings__VoyagesDb: Host=postgres;Port=5432;Database=amina_travel;Username=amina;Password=amina;SearchPath=voyages
       ConnectionStrings__ReservationsDb: Host=postgres;Port=5432;Database=amina_travel;Username=amina;Password=amina;SearchPath=reservations
