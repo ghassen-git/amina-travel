@@ -69,6 +69,7 @@ services:
     restart: unless-stopped
     environment:
       API_URL_INTERNAL: http://api:8080   # server-side rendering hits the API in-network
+      HOSTNAME: "0.0.0.0"                  # Next standalone: bind all interfaces (Docker)
     depends_on: [api]
     networks: [amina]
 
@@ -82,6 +83,7 @@ services:
     restart: unless-stopped
     environment:
       API_URL_INTERNAL: http://api:8080
+      HOSTNAME: "0.0.0.0"
     depends_on: [api]
     networks: [amina]
 

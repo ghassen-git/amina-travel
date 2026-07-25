@@ -152,6 +152,9 @@ $COMPOSE down               # stop (keeps the DB volume)
 cd /opt/amina-travel
 git pull && git submodule update --init --recursive
 cd deploy && docker compose -f docker-compose.prod.yml --env-file .env up -d --build
+# Recreated web/admin get NEW container IPs; nginx caches the old ones (→ 502).
+# Always bounce nginx after an app rebuild so it re-resolves:
+docker compose -f docker-compose.prod.yml restart nginx
 ```
 
 ### Database backup / restore
