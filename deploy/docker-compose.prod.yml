@@ -32,6 +32,7 @@ services:
       ConnectionStrings__HotelsDb:       Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};SearchPath=hotels
       ConnectionStrings__AuthDb:         Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};SearchPath=auth
       ConnectionStrings__PromosDb:       Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};SearchPath=promos
+      ConnectionStrings__ReelsDb:        Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};SearchPath=reels
       ConnectionStrings__BookingsDb:     Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};SearchPath=bookings
       ConnectionStrings__VoyagesDb:      Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};SearchPath=voyages
       ConnectionStrings__ReservationsDb: Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};SearchPath=reservations
