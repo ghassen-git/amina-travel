@@ -2,7 +2,12 @@
 #
 # Amina Travel — one-shot provisioning for a FRESH Ubuntu VPS.
 #
-#   curl -fsSL https://raw.githubusercontent.com/ghassen-git/amina-travel/main/deploy/provision.sh | bash
+#   bash -c "$(curl -fsSL https://raw.githubusercontent.com/ghassen-git/amina-travel/main/deploy/provision.sh)"
+#
+# This repo is public but the `front` and `backend` submodules are PRIVATE, so the clone
+# needs a GitHub token. The script prompts for one (or reads $GITHUB_TOKEN). Use the
+# `bash -c "$(curl ...)"` form above rather than `curl | bash` — piping steals stdin and
+# the prompt can't read your input.
 #
 # Brings a bare box all the way to a running stack: hardening, swap, Docker, the repo,
 # a generated deploy/.env, a self-signed origin cert for Cloudflare "Full", and the
@@ -27,7 +32,7 @@ step() { printf '\n\033[1;34m==> %s\033[0m\n' "$1"; }
 
 [ "$(id -u)" -eq 0 ] || { echo "Run as root."; exit 1; }
 
-step "1/8  Deploy key"
+step "1/9  Deploy key"
 mkdir -p /root/.ssh && chmod 700 /root/.ssh
 touch /root/.ssh/authorized_keys && chmod 600 /root/.ssh/authorized_keys
 grep -qF "${DEPLOY_KEY%% *} ${DEPLOY_KEY#* }" /root/.ssh/authorized_keys 2>/dev/null \
@@ -35,7 +40,7 @@ grep -qF "${DEPLOY_KEY%% *} ${DEPLOY_KEY#* }" /root/.ssh/authorized_keys 2>/dev/
   || echo "$DEPLOY_KEY" >> /root/.ssh/authorized_keys
 echo "installed"
 
-step "2/8  Base packages + firewall + fail2ban"
+step "2/9  Base packages + firewall + fail2ban"
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -qq
 apt-get install -y -qq ca-certificates curl git openssl ufw fail2ban unattended-upgrades >/dev/null
@@ -44,7 +49,7 @@ ufw --force enable >/dev/null
 systemctl enable --now fail2ban >/dev/null 2>&1 || true
 echo "ufw active, fail2ban running"
 
-step "3/8  Swap (4 GB — 4 GB RAM alone OOMs the Next/.NET builds)"
+step "3/9  Swap (4 GB — 4 GB RAM alone OOMs the Next/.NET builds)"
 if ! swapon --show | grep -q .; then
   fallocate -l 4G /swapfile && chmod 600 /swapfile && mkswap /swapfile >/dev/null && swapon /swapfile
   grep -q '/swapfile' /etc/fstab || echo '/swapfile none swap sw 0 0' >> /etc/fstab
@@ -53,13 +58,35 @@ else
   echo "swap already present — skipped"
 fi
 
-step "4/8  Docker Engine + Compose plugin"
+step "4/9  Docker Engine + Compose plugin"
 if ! command -v docker >/dev/null 2>&1; then
   curl -fsSL https://get.docker.com | sh >/dev/null
 fi
 docker --version && docker compose version
 
-step "5/8  Source at $APP_DIR"
+step "5/9  GitHub access (front + backend submodules are private)"
+# Persisted in root-only /root/.gitconfig so later redeploys can `git pull` unattended.
+if git ls-remote https://github.com/ghassen-git/amina-travel-front.git HEAD >/dev/null 2>&1; then
+  echo "already authorised"
+else
+  if [ -z "${GITHUB_TOKEN:-}" ]; then
+    if [ -t 0 ]; then
+      read -rsp "GitHub token (needs read access to the two private repos): " GITHUB_TOKEN
+      echo
+    else
+      echo "ERROR: no GITHUB_TOKEN and no terminal to prompt on." >&2
+      echo "Re-run as: bash -c \"\$(curl -fsSL <script-url>)\"" >&2
+      exit 1
+    fi
+  fi
+  git config --global url."https://${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
+  chmod 600 /root/.gitconfig
+  git ls-remote https://github.com/ghassen-git/amina-travel-front.git HEAD >/dev/null 2>&1 \
+    || { echo "ERROR: token rejected — check it can read ghassen-git/amina-travel-front." >&2; exit 1; }
+  echo "token accepted and stored in /root/.gitconfig (rotate when convenient)"
+fi
+
+step "6/9  Source at $APP_DIR"
 if [ -d "$APP_DIR/.git" ]; then
   git -C "$APP_DIR" fetch --all --quiet
   git -C "$APP_DIR" checkout main --quiet
@@ -70,7 +97,7 @@ else
 fi
 echo "at $(git -C "$APP_DIR" rev-parse --short HEAD)"
 
-step "6/8  deploy/.env"
+step "7/9  deploy/.env"
 ENV_FILE="$APP_DIR/deploy/.env"
 if [ -f "$ENV_FILE" ]; then
   echo "already exists — left untouched"
@@ -102,7 +129,7 @@ EOF
   echo "written (generated POSTGRES_PASSWORD + JWT_SIGNING_KEY)"
 fi
 
-step "7/8  Self-signed origin cert (Cloudflare SSL mode \"Full\")"
+step "8/9  Self-signed origin cert (Cloudflare SSL mode \"Full\")"
 CERT_DIR="$APP_DIR/deploy/nginx/certs"
 mkdir -p "$CERT_DIR"
 if [ ! -f "$CERT_DIR/origin.pem" ]; then
@@ -116,7 +143,7 @@ else
   echo "already present — skipped"
 fi
 
-step "8/8  Build & start the stack (several minutes on 1 core)"
+step "9/9  Build & start the stack (several minutes on 1 core)"
 cd "$APP_DIR/deploy"
 $COMPOSE --env-file .env up -d --build
 # Rebuilt web/admin get new container IPs and nginx caches the old ones (→ 502).
