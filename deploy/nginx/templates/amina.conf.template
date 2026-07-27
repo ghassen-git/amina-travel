@@ -16,10 +16,18 @@ server {
     return 444;
 }
 
-# --- Website: ${DOMAIN} + www.${DOMAIN} ---
+# --- www -> apex, permanently. Serving both meant Google indexed two complete copies of
+#     the site and split its link value between them. The apex is canonical. ---
 server {
     listen 80;
-    server_name ${DOMAIN} www.${DOMAIN};
+    server_name www.${DOMAIN};
+    return 301 https://${DOMAIN}$request_uri;
+}
+
+# --- Website: ${DOMAIN} ---
+server {
+    listen 80;
+    server_name ${DOMAIN};
 
     location / {
         proxy_pass http://web_upstream;
