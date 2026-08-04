@@ -66,6 +66,12 @@ server {
     ssl_certificate_key /etc/nginx/certs/origin.key;
     client_max_body_size 25m;
     location / {
+        # Timeout hierarchy: Cloudflare (100s) -> Backend (120s) -> Nginx (130s buffer)
+        # Extended timeouts for slow TunisiaBeds availability searches (4+ seconds per request)
+        proxy_read_timeout 130s;      # Time to read response from backend
+        proxy_connect_timeout 130s;   # Time to establish connection to backend
+        proxy_send_timeout 130s;      # Time to send request to backend
+
         proxy_pass http://api_upstream;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
