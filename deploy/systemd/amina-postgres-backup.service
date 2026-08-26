@@ -1,0 +1,31 @@
+[Unit]
+Description=Amina Travel PostgreSQL Backup to Cloudflare R2
+Documentation=https://github.com/ghassen-git/amina-travel
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+User=root
+WorkingDirectory=/opt/amina-travel/deploy
+
+# Load environment variables from production .env
+EnvironmentFile=/opt/amina-travel/deploy/.env
+
+# Execute the backup script
+ExecStart=/opt/amina-travel/deploy/scripts/backup-postgres.sh
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=amina-backup
+
+# Security hardening
+PrivateTmp=yes
+NoNewPrivileges=yes
+
+# Timeout (allow 30 minutes for large databases)
+TimeoutStartSec=1800
+
+[Install]
+WantedBy=multi-user.target

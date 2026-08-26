@@ -1,0 +1,16 @@
+[Unit]
+Description=Daily PostgreSQL Backup Timer for Amina Travel
+Documentation=https://github.com/ghassen-git/amina-travel
+
+[Timer]
+# Run daily at 02:00 server local time
+OnCalendar=*-*-* 02:00:00
+
+# If the system was off at the scheduled time, run the backup shortly after boot
+Persistent=true
+
+# Randomize start time by up to 10 minutes to avoid exact-time load spikes
+RandomizedDelaySec=600
+
+[Install]
+WantedBy=timers.target
