@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ssh -i ~/.ssh/amina_deploy_ed25519 root@162.35.185.169:*)"
+    ]
+  }
+}

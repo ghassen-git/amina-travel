@@ -47,7 +47,7 @@ DRY_RUN="${DRY_RUN:-0}"
 # ============================================================================
 
 log() {
-    echo "[$(date -u '+%Y-%m-%d %H:%M:%S UTC')] $*"
+    echo "[$(date -u '+%Y-%m-%d %H:%M:%S UTC')] $*" >&2
 }
 
 log_error() {
@@ -55,7 +55,7 @@ log_error() {
 }
 
 log_success() {
-    echo "[$(date -u '+%Y-%m-%d %H:%M:%S UTC')] ✓ $*"
+    echo "[$(date -u '+%Y-%m-%d %H:%M:%S UTC')] ✓ $*" >&2
 }
 
 # ============================================================================
@@ -194,11 +194,12 @@ upload_to_r2() {
     log "Uploading to Cloudflare R2: s3://${R2_BUCKET}/${remote_key}..."
     
     # Upload using AWS CLI with R2 endpoint
+    # Redirect stdout/stderr to prevent contamination of AWS CLI execution
     if ! AWS_ACCESS_KEY_ID="${R2_ACCESS_KEY_ID}" \
          AWS_SECRET_ACCESS_KEY="${R2_SECRET_ACCESS_KEY}" \
          aws s3 cp "${local_file}" "s3://${R2_BUCKET}/${remote_key}" \
          --endpoint-url "${R2_ENDPOINT}" \
-         --no-progress; then
+         --no-progress >/dev/null 2>&1; then
         log_error "Upload to R2 failed"
         return 3
     fi
@@ -208,7 +209,7 @@ upload_to_r2() {
     if ! AWS_ACCESS_KEY_ID="${R2_ACCESS_KEY_ID}" \
          AWS_SECRET_ACCESS_KEY="${R2_SECRET_ACCESS_KEY}" \
          aws s3 ls "s3://${R2_BUCKET}/${remote_key}" \
-         --endpoint-url "${R2_ENDPOINT}" &> /dev/null; then
+         --endpoint-url "${R2_ENDPOINT}" >/dev/null 2>&1; then
         log_error "Upload verification failed - file not found in R2"
         return 3
     fi
@@ -237,7 +238,7 @@ cleanup_old_backups() {
                         AWS_SECRET_ACCESS_KEY="${R2_SECRET_ACCESS_KEY}" \
                         aws s3 ls "s3://${R2_BUCKET}/backups/" \
                         --endpoint-url "${R2_ENDPOINT}" \
-                        --recursive | awk '{print $4}' || echo "")
+                        --recursive 2>/dev/null | awk '{print $4}' || echo "")
     
     if [[ -z "${backup_list}" ]]; then
         log "No backups found in R2 (this is normal for first run)"
@@ -257,7 +258,7 @@ cleanup_old_backups() {
                 if AWS_ACCESS_KEY_ID="${R2_ACCESS_KEY_ID}" \
                    AWS_SECRET_ACCESS_KEY="${R2_SECRET_ACCESS_KEY}" \
                    aws s3 rm "s3://${R2_BUCKET}/${backup_key}" \
-                   --endpoint-url "${R2_ENDPOINT}"; then
+                   --endpoint-url "${R2_ENDPOINT}" >/dev/null 2>&1; then
                     ((deleted_count++))
                 else
                     log_error "Failed to delete ${backup_key}"

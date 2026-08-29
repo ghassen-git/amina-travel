@@ -20,12 +20,24 @@ services:
       timeout: 5s
       retries: 5
     networks: [amina]
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 256M
 
   api:
     build:
       context: ../backend
     container_name: amina-api
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 256M
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://0.0.0.0:8080
@@ -73,6 +85,12 @@ services:
       HOSTNAME: "0.0.0.0"                  # Next standalone: bind all interfaces (Docker)
     depends_on: [api]
     networks: [amina]
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+        reservations:
+          memory: 128M
 
   admin:
     build:
@@ -87,6 +105,12 @@ services:
       HOSTNAME: "0.0.0.0"
     depends_on: [api]
     networks: [amina]
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+        reservations:
+          memory: 128M
 
   nginx:
     image: nginx:1.27-alpine
@@ -103,6 +127,12 @@ services:
       - ./nginx/certs:/etc/nginx/certs:ro   # origin.pem + origin.key (self-signed for "Full")
     depends_on: [web, admin, api]
     networks: [amina]
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 64M
 
 networks:
   amina:
